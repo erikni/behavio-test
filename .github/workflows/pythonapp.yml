@@ -1,0 +1,61 @@
+name: behavio-test
+
+on:
+  push:
+    branches:
+    - master
+    - develop
+    - feature/*
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        #python: ['3.7', '3.8']
+        python: ['3.7', ]
+
+    env:
+      PYTHONPATH: $PYTHONPATH:/usr/lib/python3/dist-packages/:/usr/local/lib/python3/dist-packages:$PWD
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python }}
+
+    #
+    # INSTALL
+    # 
+
+    - name: Install dependencies [system]
+      run: |
+        sudo apt-get update
+        sudo apt-get install python3 python3-pip pylint3 dpkg python3-dev wget -y
+        python3 -V
+
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+
+    - name: Set up PYTHONPATH
+      run: export PYTHONPATH=$PYTHONPATH:/usr/lib/python3/dist-packages/:/usr/local/lib/python3/dist-packages:$PWD
+
+    - name: Install dependencies [python]
+      run: ./requirements.sh
+
+    #
+    # TEST
+    # 
+
+    - name: Code analysis with Pylint 
+      run: ./test/example/pylint.sh
+
+    - name: Tests with pytest
+      run: |
+        sudo apt-get install python3-pytest -y
+        echo
+
+        echo "pytest-3 -v test/unit ... "
+        pytest-3 -v test/unit
